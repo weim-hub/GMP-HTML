@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>餐食预定规则管理 - 后台管理系统</title>
+    <style>
+        :root {
+            /* 淡绿色调主题 */
+            --primary-green: #34A853;       /* 主色调绿 */
+            --primary-hover: #2b8a44;
+            --light-green-bg: #E8F5E9;      /* 极浅绿背景，用于表头和特殊模块 */
+            --bg-color: #F4F9F5;            /* 页面整体背景色 */
+            --box-bg: #FFFFFF;              /* 内容区白底 */
+            --text-main: #333333;
+            --text-secondary: #666666;
+            --border-color: #E0E0E0;
+            --danger-color: #EA4335;        /* 删除操作红 */
+            --danger-hover: #d33828;
+            --status-active-bg: #CEEAD6;    /* 生效状态背景 */
+            --status-active-text: #0D652D;  /* 生效状态文字 */
+            --status-disabled-bg: #F1F3F4;  /* 禁用状态背景 */
+            --status-disabled-text: #5F6368;/* 禁用状态文字 */
+            --modal-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 24px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .btn {
+            padding: 9px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-green);
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(52, 168, 83, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            box-shadow: 0 4px 8px rgba(52, 168, 83, 0.3);
+        }
+
+        .btn-ghost {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-ghost:hover {
+            background: #f9f9f9;
+        }
+
+        /* 表格模块 */
+        .table-container {
+            background-color: var(--box-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            margin-bottom: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        th {
+            background-color: var(--light-green-bg);
+            color: var(--text-main);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: #fcfdfc;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 状态标签 */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .status-active {
+            background-color: var(--status-active-bg);
+            color: var(--status-active-text);
+        }
+
+        .status-disabled {
+            background-color: var(--status-disabled-bg);
+            color: var(--status-disabled-text);
+        }
+
+        /* 操作按钮链接 */
+        .action-links {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .action-link {
+            color: var(--primary-green);
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s;
+            font-weight: 500;
+        }
+
+        .action-link:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
+        }
+
+        .action-link.delete {
+            color: var(--danger-color);
+        }
+
+        .action-link.delete:hover {
+            color: var(--danger-hover);
+        }
+
+        /* 备注模块：移至页面下方 */
+        .remarks-panel {
+            background-color: var(--box-bg);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-green);
+            border-radius: 6px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        .remarks-panel h3 {
+            font-size: 15px;
+            margin-bottom: 12px;
+            color: var(--primary-green);
+            display: flex;
+            align-items: center;
+        }
+        
+        .remarks-panel h3::before {
+            content: 'ℹ️';
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .remarks-panel ol {
+            padding-left: 20px;
+            color: var(--text-secondary);
+        }
+
+        .remarks-panel li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        /* --- 弹窗样式 (Modal) --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: none; /* 默认隐藏 */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background: #fff;
+            width: 680px;
+            border-radius: 12px;
+            box-shadow: var(--modal-shadow);
+            animation: slideIn 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--light-green-bg);
+        }
+        
+        .modal-header h2 { font-size: 18px; color: #2c3e50; }
+        .close-modal { font-size: 24px; cursor: pointer; color: #999; }
+        .close-modal:hover { color: #666; }
+
+        .modal-body { padding: 24px; }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-item { display: flex; flex-direction: column; gap: 8px; }
+        .form-item.full-width { grid-column: span 2; }
+        
+        label { font-weight: 500; color: #555; }
+        label span { color: var(--danger-color); margin-left: 4px; }
+
+        input, select, textarea {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(52, 168, 83, 0.1);
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            background: #fcfdfc;
+        }
+        
+        .field-tip { font-size: 12px; color: #999; margin-top: 4px; }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="page-header">
+        <h1 class="page-title">餐食预定规则管理</h1>
+        <button class="btn btn-primary" onclick="openModal()">+ 新增规则</button>
+    </div>
+
+    <!-- 数据列表区域 -->
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>餐食代码</th>
+                    <th>餐食名称</th>
+                    <th>英文名称</th>
+                    <th>价格</th>
+                    <th>单航班可购数量</th>
+                    <th>适用航线</th>
+                    <th>可购买时限（起飞前X小时外）</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>创建人</th>
+                    <th>更新时间</th>
+                    <th>更新人</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>LCZJF</td>
+                    <td>腊肠蒸鸡饭</td>
+                    <td>Steamed Chicken Rice with Chinese Sausage</td>
+                    <td>30</td>
+                    <td>30</td>
+                    <td>TPE-HKG/SZX-HSN</td>
+                    <td>48</td>
+                    <td><span class="status-badge status-active">生效</span></td>
+                    <td>2026/6/1</td>
+                    <td>Kyle</td>
+                    <td></td>
+                    <td></td>
+                    <td class="action-links">
+                        <a class="action-link" onclick="handleAction('修改', '腊肠蒸鸡饭')">修改</a>
+                        <a class="action-link" onclick="handleAction('操作记录', '腊肠蒸鸡饭')">操作记录</a>
+                        <a class="action-link delete" onclick="handleDelete('腊肠蒸鸡饭')">删除</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>XCHF</td>
+                    <td>小炒皇饭</td>
+                    <td>Stir-fried Rice</td>
+                    <td>30</td>
+                    <td>25</td>
+                    <td>ALL-HKG</td>
+                    <td>48</td>
+                    <td><span class="status-badge status-disabled">禁用</span></td>
+                    <td>2026/5/15</td>
+                    <td>Kyle</td>
+                    <td></td>
+                    <td></td>
+                    <td class="action-links">
+                        <a class="action-link" onclick="handleAction('修改', '小炒皇饭')">修改</a>
+                        <a class="action-link" onclick="handleAction('操作记录', '小炒皇饭')">操作记录</a>
+                        <a class="action-link delete" onclick="handleDelete('小炒皇饭')">删除</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>WXRDCGZM</td>
+                    <td>五香肉丁炒公仔面</td>
+                    <td>Spiced Pork Stir-fried Instant Noodles</td>
+                    <td>40</td>
+                    <td>40</td>
+                    <td>HKG-ALL</td>
+                    <td>48</td>
+                    <td><span class="status-badge status-active">生效</span></td>
+                    <td>2026/3/1</td>
+                    <td>Kyle</td>
+                    <td></td>
+                    <td></td>
+                    <td class="action-links">
+                        <a class="action-link" onclick="handleAction('修改', '五香肉丁炒公仔面')">修改</a>
+                        <a class="action-link" onclick="handleAction('操作记录', '五香肉丁炒公仔面')">操作记录</a>
+                        <a class="action-link delete" onclick="handleDelete('五香肉丁炒公仔面')">删除</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>CSCYZF</td>
+                    <td>叉烧炒银针粉</td>
+                    <td>Char siu stir-fried with silver needle noodles</td>
+                    <td>40</td>
+                    <td>30</td>
+                    <td>ALL</td>
+                    <td>48</td>
+                    <td><span class="status-badge status-active">生效</span></td>
+                    <td>2026/2/20</td>
+                    <td>Kyle</td>
+                    <td>2026/5/17</td>
+                    <td>Cece</td>
+                    <td class="action-links">
+                        <a class="action-link" onclick="handleAction('修改', '叉烧炒银针粉')">修改</a>
+                        <a class="action-link" onclick="handleAction('操作记录', '叉烧炒银针粉')">操作记录</a>
+                        <a class="action-link delete" onclick="handleDelete('叉烧炒银针粉')">删除</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>ZJRLF</td>
+                    <td>镇江肉粒饭</td>
+                    <td>Zhenjiang Meat Rice</td>
+                    <td>50</td>
+                    <td>20</td>
+                    <td>HSN-HKG</td>
+                    <td>48</td>
+                    <td><span class="status-badge status-disabled">禁用</span></td>
+                    <td>2026/1/1</td>
+                    <td>Kyle</td>
+                    <td></td>
+                    <td></td>
+                    <td class="action-links">
+                        <a class="action-link" onclick="handleAction('修改', '镇江肉粒饭')">修改</a>
+                        <a class="action-link" onclick="handleAction('操作记录', '镇江肉粒饭')">操作记录</a>
+                        <a class="action-link delete" onclick="handleDelete('镇江肉粒饭')">删除</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 备注区域 -->
+    <div class="remarks-panel">
+        <h3>配置备注与说明</h3>
+        <ol>
+            <li>适用航线写法：一种餐食支持多条航线，适用/分隔，例如：TPE-HKG/SZX-HSN；支持始发地ALL或者目的地ALL，例如：ALL-HKG或者TPE-ALL；支持全部航线适用，填写ALL即可</li>
+            <li>价格为每份餐食的价格</li>
+            <li>价格的货币单位跟随订单的货币单位</li>
+            <li>仅“已出票”状态的订单可购买餐食</li>
+            <li>可以选择一程需要餐食，一程不要；餐食预定必须全团订，不能选中部分旅客需要，部分旅客不需要</li>
+            <li>餐食允许提交退款，航司审批通过后即可退款</li>
+        </ol>
+    </div>
+
+</div>
+
+<!-- 新增规则弹窗页面 -->
+<div class="modal-overlay" id="addModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>新增餐食预定规则</h2>
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="addForm" onsubmit="event.preventDefault(); saveData();">
+                <div class="form-grid">
+                    <div class="form-item">
+                        <label>餐食代码<span>*</span></label>
+                        <input type="text" required placeholder="请输入代码，如 LCZJF">
+                    </div>
+                    <div class="form-item">
+                        <label>状态<span>*</span></label>
+                        <select required>
+                            <option value="生效">生效</option>
+                            <option value="禁用">禁用</option>
+                        </select>
+                    </div>
+                    <div class="form-item">
+                        <label>餐食名称<span>*</span></label>
+                        <input type="text" required placeholder="请输入中文名称">
+                    </div>
+                    <div class="form-item">
+                        <label>英文名称</label>
+                        <input type="text" placeholder="请输入英文名称">
+                    </div>
+                    <div class="form-item">
+                        <label>价格<span>*</span></label>
+                        <input type="number" required min="0" placeholder="0.00">
+                    </div>
+                    <div class="form-item">
+                        <label>单航班可购数量<span>*</span></label>
+                        <input type="number" required min="0" placeholder="请输入限制数量">
+                    </div>
+                    <div class="form-item">
+                        <label>可购买时限（起飞前X小时外）<span>*</span></label>
+                        <input type="number" required min="0" value="48">
+                    </div>
+                    <div class="form-item">
+                        <!-- 留空以平衡双列布局 -->
+                    </div>
+                    <div class="form-item full-width">
+                        <label>适用航线<span>*</span></label>
+                        <textarea rows="2" required placeholder="请输入适用航线，多条用 / 分隔"></textarea>
+                        <p class="field-tip">示例: TPE-HKG/SZX-HSN 或 ALL-HKG 或 ALL</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" onclick="closeModal()">取消</button>
+            <button type="button" class="btn btn-primary" onclick="saveData()">提交保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('addModal');
+
+    function openModal() {
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+        document.getElementById('addForm').reset();
+    }
+
+    // 点击遮罩层关闭弹窗
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+
+    // 简单的交互功能模拟
+    function handleAction(actionType, itemName) {
+        alert("系统提示：准备对【" + itemName + "】执行 [" + actionType + "] 操作。");
+    }
+
+    function handleDelete(itemName) {
+        if (confirm("危险操作：确定要删除【" + itemName + "】的预定规则吗？此操作不可恢复。")) {
+            alert("已模拟删除【" + itemName + "】。");
+        }
+    }
+
+    function saveData() {
+        alert('提交成功！新规则已成功保存入库（当前为前端原型模拟）。');
+        closeModal();
+    }
+</script>
+
+</body>
+</html>
